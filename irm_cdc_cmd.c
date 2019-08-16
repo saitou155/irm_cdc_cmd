@@ -22,7 +22,7 @@ int irm_open()
 	struct sp_port **ports;
 	struct sp_port *port0 = NULL;
 	enum sp_return ret;
-	int i,res;
+	int i;
 	int cnt = -1;
 
 	ret = sp_list_ports(&ports);
@@ -123,8 +123,8 @@ int irm_puts(unsigned char * data, int size)
 int irm_gets(unsigned char * data, int size)
 {
 	int mS = 200;
-	int res = -1;
-	int ret,count;
+	int res = 0;
+	int i,ret,count;
 	unsigned char * poi;
 	size_t remain;
 
@@ -133,32 +133,36 @@ int irm_gets(unsigned char * data, int size)
 	count = 0;
 	poi = data + count;
 	remain = size - count;
-	while(remain > 0)
+	for(i = 0;;i++)
 	{
-		if (mS != 0)
+		if(remain <= 0)
 		{
-			ret = sp_blocking_read_next(port,poi, remain, mS);
+			break;
 		}
-		else
+		if(strstr((const char*)data,"\r\n") != NULL)
 		{
-			ret = sp_nonblocking_read(port,poi, remain);
+			break;
 		}
-		if(ret >= 0)
+		ret = sp_blocking_read_next(port,poi, remain, mS);
+		if(ret > 0)
 		{
 			count += ret;
 			poi = data + count;
 			remain = size - count;
 			res = count;
-			if(ret == 0)
+		}
+		else if(ret == 0)
+		{
+			if(i != 0)
 			{
 				break;
 			}
 		}
-		else
+		else //if(ret == 0)
 		{
+			res = ret;
 			break;
 		}
-		mS = 0;
 	}
 	if(res >= 0)
 	{
@@ -185,7 +189,6 @@ int irm_cmd(const char* cmd1)
 {
 	int result = -1;
 	int ret;
-	char buf[256];
 
 	ret = irm_puts((unsigned char*)cmd1, strlen(cmd1));
 	if(ret < 0)
@@ -334,7 +337,7 @@ int irm_receive()
 			}
 		}
 		sprintf(cmd,"D,%d\r\n",nOff);
-		ret = irm_cmd_res(cmd,buf,sizeof(buf));
+		ret = irm_cmd_res(cmd,buf,3);
 		if(ret < 0)
 		{
 			goto EXIT_PATH;
@@ -555,7 +558,6 @@ void usage()
 
 void dump(char cType, const unsigned char* data,int size)
 {
-	char * poi;
 	char c;
 	int i,j;
 	for(i = 0;i < size;i+=16)
