@@ -61,8 +61,8 @@ To output the JSON file with this command, use the shell function as follows.
 Add a rule to udev In LINUX as follows:
 ```
 # /etc/udev/rules.d/99-irusb.rules
-#	bto_ir
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="22ea", ATTRS{idProduct}=="001e", GROUP="users", MODE="0666"
+#	irMagician
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="000a", GROUP="users", MODE="0666"
 ```
 
 Update is as follows:
